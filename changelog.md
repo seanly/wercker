@@ -1,6 +1,7 @@
 ## unreleased
 
 - Add additional output when storing artifacts (#207)
+- Output more descriptive error message when setup environment fails (#230)
 
 ## v1.0.560 (2016-07-14)
 

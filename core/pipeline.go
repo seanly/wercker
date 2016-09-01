@@ -215,11 +215,11 @@ func (p *BasePipeline) SetupGuest(sessionCtx context.Context, sess *Session) err
 	p.logger.Printf(f.Info("Copying source to container"))
 	for _, cmd := range cmds {
 		exit, _, err := sess.SendChecked(sessionCtx, cmd)
+		if exit != 0 {
+			return fmt.Errorf("Guest command failed with exit code %d: %s", exit, cmd)
+		}
 		if err != nil {
 			return err
-		}
-		if exit != 0 {
-			return fmt.Errorf("Guest command failed: %s", cmd)
 		}
 	}
 	if p.options.Verbose {
