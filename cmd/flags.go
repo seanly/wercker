@@ -71,8 +71,7 @@ var (
 			Usage: "The application owner name."},
 		cli.StringFlag{Name: "application-started-by-name", Value: "", EnvVar: "WERCKER_APPLICATION_STARTED_BY_NAME", Hidden: true,
 			Usage: "The name of the user who started the application."},
-		cli.StringFlag{Name: "pipeline", Value: "", EnvVar: "WERCKER_PIPELINE", Hidden: true,
-			Usage: "Alternate pipeline name to execute."},
+		cli.StringFlag{Name: "pipeline", Value: "", EnvVar: "WERCKER_PIPELINE", Usage: "Alternate pipeline name to execute."},
 	}
 
 	GitFlags = []cli.Flag{
