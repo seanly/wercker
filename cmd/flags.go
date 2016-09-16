@@ -177,6 +177,7 @@ var (
 
 	// These options might be overwritten by the wercker.yml
 	ConfigFlags = []cli.Flag{
+		cli.StringFlag{Name: "ignore-file", Value: ".werckerignore", Usage: "File with file patterns to ignore when copying files."},
 		cli.StringFlag{Name: "source-dir", Value: "", Usage: "Source path relative to checkout root."},
 		cli.Float64Flag{Name: "no-response-timeout", Value: 5, Usage: "Timeout if no script output is received in this many minutes."},
 		cli.Float64Flag{Name: "command-timeout", Value: 25, Usage: "Timeout if command does not complete in this many minutes."},

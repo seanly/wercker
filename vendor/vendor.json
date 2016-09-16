@@ -706,6 +706,12 @@
 			"revisionTime": "2015-12-11T00:06:21Z"
 		},
 		{
+			"checksumSHA1": "2/5+3QWAReoUSNpaURIN2YoqBJo=",
+			"path": "github.com/monochromegane/go-gitignore",
+			"revision": "38717d0a108ca0e5af632cd6845ca77d45b50729",
+			"revisionTime": "2016-01-05T11:36:17Z"
+		},
+		{
 			"checksumSHA1": "vAXovG4uv8wFzhzCiB2eVONXra0=",
 			"path": "github.com/mreiferson/go-snappystream",
 			"revision": "028eae7ab5c4c9e2d1cb4c4ca1e53259bbe7e504",

@@ -245,6 +245,7 @@ type Config struct {
 	NoResponseTimeout int             `yaml:"no-response-timeout"`
 	Services          []*RawBoxConfig `yaml:"services"`
 	SourceDir         string          `yaml:"source-dir"`
+	IgnoreFile        string          `yaml:"ignore-file"`
 	PipelinesMap      map[string]*RawPipelineConfig
 }
 

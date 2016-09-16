@@ -355,6 +355,7 @@ type PipelineOptions struct {
 	ShouldArtifacts   bool
 	ShouldRemove      bool
 	SourceDir         string
+	IgnoreFile        string
 
 	AttachOnError  bool
 	DirectMount    bool
@@ -364,6 +365,12 @@ type PipelineOptions struct {
 	EnableVolumes  bool
 	WerckerYml     string
 	Checkpoint     string
+
+	DefaultsUsed PipelineDefaultsUsed
+}
+
+type PipelineDefaultsUsed struct {
+	IgnoreFile bool
 }
 
 func guessApplicationID(c util.Settings, e *util.Environment, name string) string {
@@ -559,6 +566,7 @@ func NewPipelineOptions(c util.Settings, e *util.Environment) (*PipelineOptions,
 	shouldRemove, _ := c.Bool("no-remove")
 	shouldRemove = !shouldRemove
 	sourceDir, _ := c.String("source-dir")
+	ignoreFile, ignoreFileSet := c.String("ignore-file")
 
 	attachOnError, _ := c.Bool("attach-on-error")
 	directMount, _ := c.Bool("direct-mount")
@@ -569,6 +577,10 @@ func NewPipelineOptions(c util.Settings, e *util.Environment) (*PipelineOptions,
 	enableVolumes, _ := c.Bool("enable-volumes")
 	werckerYml, _ := c.String("wercker-yml")
 	checkpoint, _ := c.String("checkpoint")
+
+	defaultsUsed := PipelineDefaultsUsed {
+		IgnoreFile: !ignoreFileSet,
+	}
 
 	return &PipelineOptions{
 		GlobalOptions: globalOpts,
@@ -612,6 +624,7 @@ func NewPipelineOptions(c util.Settings, e *util.Environment) (*PipelineOptions,
 		ShouldArtifacts:   shouldArtifacts,
 		ShouldRemove:      shouldRemove,
 		SourceDir:         sourceDir,
+		IgnoreFile:        ignoreFile,
 
 		AttachOnError:  attachOnError,
 		DirectMount:    directMount,
@@ -622,6 +635,8 @@ func NewPipelineOptions(c util.Settings, e *util.Environment) (*PipelineOptions,
 		EnableVolumes: enableVolumes,
 		WerckerYml:    werckerYml,
 		Checkpoint:    checkpoint,
+
+		DefaultsUsed: defaultsUsed,
 	}, nil
 }
 
@@ -685,6 +700,17 @@ func (o *PipelineOptions) ProjectDownloadPath() string {
 // StepPath returns the path where downloaded steps live
 func (o *PipelineOptions) StepPath() string {
 	return path.Join(o.WorkingDir, "steps")
+}
+
+// IgnoreFilePath return the absolute path of the ignore file
+func (o *PipelineOptions) IgnoreFilePath() string {
+	expandedIgnoreFile := util.ExpandHomePath(o.IgnoreFile, o.HostEnv.Get("HOME"))
+
+	if filepath.IsAbs(expandedIgnoreFile) {
+	  return expandedIgnoreFile
+	} else {
+	  return path.Join(o.ProjectPath, o.IgnoreFile)
+	}
 }
 
 // Options per Command

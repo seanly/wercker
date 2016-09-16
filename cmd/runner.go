@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/monochromegane/go-gitignore"
 	"github.com/pborman/uuid"
 	"github.com/termie/go-shutil"
 	"github.com/wercker/wercker/core"
@@ -195,6 +196,8 @@ func (p *Runner) EnsureCode() (string, error) {
 
 		var err error
 
+		var ignoreFile, _ = gitignore.NewGitIgnore(p.options.IgnoreFilePath())
+
 		// Make sure we don't accidentally recurse or copy extra files
 		ignoreFunc := func(src string, files []os.FileInfo) []string {
 			ignores := []string{}
@@ -204,7 +207,7 @@ func (p *Runner) EnsureCode() (string, error) {
 					// Something went sufficiently wrong
 					panic(err)
 				}
-				if util.ContainsString(ignoreFiles, abspath) {
+				if util.ContainsString(ignoreFiles, abspath) || (ignoreFile != nil && ignoreFile.Match(abspath, file.IsDir())) {
 					ignores = append(ignores, file.Name())
 				}
 
@@ -290,6 +293,11 @@ func (p *Runner) GetConfig() (*core.Config, string, error) {
 	// Add some options to the global config
 	if rawConfig.SourceDir != "" {
 		p.options.SourceDir = rawConfig.SourceDir
+	}
+
+	// Only use the ignore file from the config when it is not empty and not defined as a command-line option
+	if rawConfig.IgnoreFile != "" && p.options.DefaultsUsed.IgnoreFile {
+	  p.options.IgnoreFile = rawConfig.IgnoreFile
 	}
 
 	MaxCommandTimeout := 60    // minutes

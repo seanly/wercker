@@ -902,6 +902,9 @@ func executePipeline(cmdCtx context.Context, options *core.PipelineOptions, dock
 		return nil, soft.Exit(err)
 	}
 
+	// Make sure that "include-file" is read from the config file before copying code
+	r.GetConfig()
+
 	// Start copying code
 	logger.Println(f.Info("Executing pipeline"))
 	timer.Reset()
