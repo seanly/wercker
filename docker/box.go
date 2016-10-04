@@ -84,12 +84,12 @@ func NewDockerBox(boxConfig *core.BoxConfig, options *core.PipelineOptions, dock
 
 	networkDisabled := false
 
+	entrypoint := boxConfig.Entrypoint
+
 	cmd := boxConfig.Cmd
-	if cmd == "" {
+	if entrypoint == "" && cmd == "" {
 		cmd = "/bin/bash"
 	}
-
-	entrypoint := boxConfig.Entrypoint
 
 	logger := util.RootLogger().WithFields(util.LogFields{
 		"Logger":    "Box",
