@@ -10,7 +10,7 @@ USAGE
 
 VERSION
 -------
-1.0.0 (Compiled at: 2015-05-13T10:03:29Z)
+1.0.0 (Compiled at: 2016-11-14T13:21:03Z)
 
 AUTHOR
 ------
@@ -21,7 +21,7 @@ COMMANDS
 build, b::
   build a project
 dev::
-  build a local project
+  develop and run a local project
 check-config::
   check the project's yaml
 deploy, d::
@@ -30,7 +30,7 @@ detect, de::
   detect the type of project
 login, l::
   log into wercker
-logout, l::
+logout::
   logout from wercker
 pull, p::
   pull <build id>

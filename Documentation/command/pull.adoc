@@ -17,14 +17,18 @@ OPTIONS
 
 --docker-host::
   Docker api endpoint.
-  Default;;
-    tcp://127.0.0.1:2375
 --docker-tls-verify::
   Docker api tls verify.
   Default;;
     0
 --docker-cert-path::
   Docker api cert path.
+--docker-dns::
+  Docker DNS server.
+--docker-local::
+  Don't interact with remote repositories
+--checkpoint::
+  Skip to the next step after a recent build checkpoint.
 --branch::
   Filter on this branch.
 --result::

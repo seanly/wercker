@@ -11,26 +11,16 @@ command build [command options] [arguments...]
 OPTIONS
 -------
 
---project-dir::
-  Path where downloaded projects live.
+--working-dir::
+  Path where we store working files.
   Default;;
-    ./_projects
---step-dir::
-  Path where downloaded steps live.
-  Default;;
-    ./_steps
---build-dir::
-  Path where created builds live.
-  Default;;
-    ./_builds
---container-dir::
-  Path where exported containers live.
-  Default;;
-    ./_containers
+    ./.wercker
 --build-id::
-  The build id.
+  The build id (deprecated).
 --deploy-id::
-  The deploy id.
+  The deploy id (deprecated).
+--run-id::
+  The run id.
 --deploy-target::
   The deploy target name.
 --application-id::
@@ -45,20 +35,34 @@ OPTIONS
   Alternate pipeline name to execute.
 --docker-host::
   Docker api endpoint.
-  Default;;
-    tcp://127.0.0.1:2375
 --docker-tls-verify::
   Docker api tls verify.
   Default;;
     0
 --docker-cert-path::
   Docker api cert path.
+--docker-dns::
+  Docker DNS server.
+--docker-local::
+  Don't interact with remote repositories
+--checkpoint::
+  Skip to the next step after a recent build checkpoint.
 --direct-mount::
   Mount our binds read-write to the pipeline path.
+--expose-ports::
+  Enable ports from wercker.yml beeing exposed to the host system.
 --publish::
-  Publish a port from the main container, same format as docker --publish.
---attach::
+  [Deprecated] Use: --expose-ports. - Publish a port from the main container, same format as docker --publish.
+--attach-on-error::
   Attach shell to container if a step fails.
+--enable-volumes::
+  Mount local files and directories as volumes to your wercker container, specified in your wercker.yml.
+--enable-dev-steps::
+  
+  Enable internal dev steps.
+  This enables:
+  - internal/watch
+  
 --git-domain::
   Git domain.
 --git-owner::
@@ -79,8 +83,6 @@ OPTIONS
   Store artifacts.
 --no-remove::
   Don't remove the containers.
---store-local::
-  Store artifacts and containers locally.
 --store-s3::
   Store artifacts and containers on s3.
    This requires access to aws credentials, pulled from any of the usual places
@@ -88,17 +90,21 @@ OPTIONS
    --aws-access-key flags. It will upload to a bucket defined by --s3-bucket in
    the region named by --aws-region
 --aws-secret-key::
-  Secret access key.
+  Secret access key. Used for artifact storage.
 --aws-access-key::
-  Access key id.
+  Access key id. Used for artifact storage.
 --s3-bucket::
-  Bucket for artifacts.
+  Bucket for artifact storage.
   Default;;
     wercker-development
 --aws-region::
-  Region.
+  AWS region to use for artifact storage.
   Default;;
     us-east-1
+--ignore-file::
+  File with file patterns to ignore when copying files.
+  Default;;
+    .werckerignore
 --source-dir::
   Source path relative to checkout root.
 --no-response-timeout::
