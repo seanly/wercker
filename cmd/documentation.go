@@ -182,6 +182,11 @@ func stringifyFlags(flags []cli.Flag) ([]cli.StringFlag, error) {
 				Name:  t.Name,
 				Usage: t.Usage,
 			})
+		case cli.BoolTFlag:
+			usefulFlags = append(usefulFlags, cli.StringFlag{
+				Name:  t.Name,
+				Usage: t.Usage,
+			})
 		case cli.StringFlag:
 			usefulFlags = append(usefulFlags, cli.StringFlag{
 				Name:  t.Name,
