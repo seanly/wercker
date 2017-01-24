@@ -774,73 +774,88 @@ func (s *DockerPushStep) InitEnv(env *util.Environment) {
 	}
 
 	//build auther
+	opts := authenticatorOptsBuilder(s.data, env, s.options)
+	if s.repository == "" {
+		s.repository = fmt.Sprintf("%s/%s", s.options.ApplicationOwnerName, s.options.ApplicationName)
+	}
+	auther, _ := dockerauth.GetRegistryAuthenticator(opts)
+	s.authenticator = auther
+}
+
+func authenticatorOptsBuilder(data map[string]string, env *util.Environment, options *core.PipelineOptions) dockerauth.CheckAccessOptions {
 	opts := dockerauth.CheckAccessOptions{}
-	if username, ok := s.data["username"]; ok {
+	if data == nil {
+		return opts
+	}
+	if username, ok := data["username"]; ok {
 		opts.Username = env.Interpolate(username)
 	}
-	if password, ok := s.data["password"]; ok {
+
+	if password, ok := data["password"]; ok {
 		opts.Password = env.Interpolate(password)
 	}
-	if awsAccessKey, ok := s.data["aws-access-key"]; ok {
+
+	if registry, ok := data["registry"]; ok {
+		opts.Registry = dockerauth.NormalizeRegistry(env.Interpolate(registry))
+	}
+
+	if awsAccessKey, ok := data["aws-access-key"]; ok {
 		opts.AwsAccessKey = env.Interpolate(awsAccessKey)
 	}
 
-	if awsSecretKey, ok := s.data["aws-secret-key"]; ok {
+	if awsSecretKey, ok := data["aws-secret-key"]; ok {
 		opts.AwsSecretKey = env.Interpolate(awsSecretKey)
 	}
 
-	if awsRegion, ok := s.data["aws-region"]; ok {
+	if awsRegion, ok := data["aws-region"]; ok {
 		opts.AwsRegion = env.Interpolate(awsRegion)
 	}
 
-	if awsAuth, ok := s.data["aws-strict-auth"]; ok {
+	if awsAuth, ok := data["aws-strict-auth"]; ok {
 		auth, err := strconv.ParseBool(awsAuth)
 		if err == nil {
 			opts.AwsStrictAuth = auth
 		}
 	}
 
-	if awsRegistryID, ok := s.data["aws-registry-id"]; ok {
+	if awsRegistryID, ok := data["aws-registry-id"]; ok {
 		opts.AwsRegistryID = env.Interpolate(awsRegistryID)
 	}
 
-	if azureClient, ok := s.data["azure-client-id"]; ok {
+	if azureClient, ok := data["azure-client-id"]; ok {
 		opts.AzureClientID = env.Interpolate(azureClient)
 	}
 
-	if azureClientSecret, ok := s.data["azure-client-secret"]; ok {
+	if azureClientSecret, ok := data["azure-client-secret"]; ok {
 		opts.AzureClientSecret = env.Interpolate(azureClientSecret)
 	}
 
-	if azureSubscriptionID, ok := s.data["azure-subscription-id"]; ok {
+	if azureSubscriptionID, ok := data["azure-subscription-id"]; ok {
 		opts.AzureSubscriptionID = env.Interpolate(azureSubscriptionID)
 	}
 
-	if azureTenantID, ok := s.data["azure-tenant-id"]; ok {
+	if azureTenantID, ok := data["azure-tenant-id"]; ok {
 		opts.AzureTenantID = env.Interpolate(azureTenantID)
 	}
 
-	if azureResourceGroupName, ok := s.data["azure-resource-group"]; ok {
+	if azureResourceGroupName, ok := data["azure-resource-group"]; ok {
 		opts.AzureResourceGroupName = env.Interpolate(azureResourceGroupName)
 	}
 
-	if azureRegistryName, ok := s.data["azure-registry-name"]; ok {
+	if azureRegistryName, ok := data["azure-registry-name"]; ok {
 		opts.AzureRegistryName = env.Interpolate(azureRegistryName)
 	}
 
-	if azureLoginServer, ok := s.data["azure-login-server"]; ok {
+	if azureLoginServer, ok := data["azure-login-server"]; ok {
 		opts.AzureLoginServer = env.Interpolate(azureLoginServer)
 	}
 
-	if opts.Registry == "" && opts.Username == "" && opts.Password == "" && s.repository == "" {
-		opts.Registry = s.options.WerckerContainerRegistry.String()
+	if opts.Registry == "" && opts.Username == "" && opts.Password == "" {
+		opts.Registry = options.WerckerContainerRegistry.String()
 		opts.Username = "token"
-		opts.Password = s.options.AuthToken
-		s.repository = fmt.Sprintf("%s/%s/%s", s.options.WerckerContainerRegistry.Host, s.options.ApplicationOwnerName, s.options.ApplicationName)
+		opts.Password = options.AuthToken
 	}
-	auther, _ := dockerauth.GetRegistryAuthenticator(opts)
-
-	s.authenticator = auther
+	return opts
 }
 
 // Fetch NOP
