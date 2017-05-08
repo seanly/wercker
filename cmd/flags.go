@@ -107,7 +107,6 @@ var (
 		cli.StringFlag{Name: "environment", Value: "ENVIRONMENT", Usage: "Specify additional environment variables in a file.", EnvVar: "WERCKER_ENVIRONMENT_FILE"},
 		cli.BoolFlag{Name: "verbose", Usage: "Print more information."},
 		cli.BoolFlag{Name: "no-colors", Usage: "Wercker output will not use colors (does not apply to step output)."},
-		cli.BoolFlag{Name: "debug", Usage: "Print additional debug information."},
 		cli.BoolFlag{Name: "journal", Usage: "Send logs to systemd-journald. Suppresses stdout logging."},
 	}
 
