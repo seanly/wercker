@@ -39,6 +39,19 @@ func (s *EnvironmentSuite) TestPassthru() {
 	s.Equal(1, len(env.GetHiddenPassthru().Ordered()))
 }
 
+func (s *EnvironmentSuite) TestPasstrhuKeepsOrder() {
+	env := NewEnvironment("X_fake1=val1", "X_fake2=val2", "X_fake3=$fake2")
+	actual := env.GetPassthru()
+	expected := []string{"fake1", "fake2", "fake3"}
+	s.Equal(expected, actual.Order)
+}
+func (s *EnvironmentSuite) TestPasstrhuHiddenKeepsOrder() {
+	env := NewEnvironment("XXX_fake1=val1", "XXX_fake2=val2", "XXX_fake3=$fake2")
+	actual := env.GetHiddenPassthru()
+	expected := []string{"fake1", "fake2", "fake3"}
+	s.Equal(expected, actual.Order)
+}
+
 func (s *EnvironmentSuite) TestInterpolate() {
 	env := NewEnvironment("PUBLIC=foo", "X_PRIVATE=zed", "XXX_OTHER=otter")
 	env.Update(env.GetPassthru().Ordered())

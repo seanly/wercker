@@ -20,6 +20,11 @@ import (
 	"strings"
 )
 
+var (
+	protected = "protected"
+	public    = "public"
+)
+
 // Environment represents a shell environment and is implemented as something
 // like an OrderedMap
 type Environment struct {
@@ -103,28 +108,29 @@ var mirroredEnv = [...]string{
 
 // Collect passthru variables from the project
 func (e *Environment) GetPassthru() (env *Environment) {
-	a := [][]string{}
-	for key, value := range e.Map {
-		if strings.HasPrefix(key, "X_") {
-			a = append(a, []string{strings.TrimPrefix(key, "X_"), value})
-		}
-	}
-	env = &Environment{}
-	env.Update(a)
-	return env
+	return e.passthru(public)
 }
 
 // Collect the hidden passthru variables
 func (e *Environment) GetHiddenPassthru() (env *Environment) {
+	return e.passthru(protected)
+}
+
+func (e *Environment) passthru(envType string) (env *Environment) {
+	prefix := "X_"
+	if envType == protected {
+		prefix = "XXX_"
+	}
 	a := [][]string{}
-	for key, value := range e.Map {
-		if strings.HasPrefix(key, "XXX_") {
-			a = append(a, []string{strings.TrimPrefix(key, "XXX_"), value})
+	for _, key := range e.Order {
+		if strings.HasPrefix(key, prefix) {
+			a = append(a, []string{strings.TrimPrefix(key, prefix), e.Map[key]})
 		}
 	}
 	env = &Environment{}
 	env.Update(a)
 	return env
+
 }
 
 func (e *Environment) GetMirror() [][]string {
