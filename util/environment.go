@@ -21,8 +21,8 @@ import (
 )
 
 var (
-	protected = "protected"
-	public    = "public"
+	protected = "XXX_"
+	public    = "X_"
 )
 
 // Environment represents a shell environment and is implemented as something
@@ -116,11 +116,7 @@ func (e *Environment) GetHiddenPassthru() (env *Environment) {
 	return e.passthru(protected)
 }
 
-func (e *Environment) passthru(envType string) (env *Environment) {
-	prefix := "X_"
-	if envType == protected {
-		prefix = "XXX_"
-	}
+func (e *Environment) passthru(prefix string) (env *Environment) {
 	a := [][]string{}
 	for _, key := range e.Order {
 		if strings.HasPrefix(key, prefix) {
