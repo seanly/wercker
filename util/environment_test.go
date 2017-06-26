@@ -93,10 +93,17 @@ func (s *EnvironmentSuite) TestLoadFile() {
 		[]string{"E", "5"},
 		[]string{"F", "6"},
 		[]string{"G", "7"},
+		[]string{"H", "8"},
+		[]string{"I", "9"},
+		[]string{"J", "Hello \"quotes\""},
+		[]string{"K", ""},
+		[]string{"L", "\n"},
+		[]string{"M", `\"`},
+		[]string{"N", `"`},
 	}
 	env.LoadFile("../tests/environment-test-load-file.env")
-	s.Equal(8, len(env.Ordered()), "Should only load 8 valid lines.")
+	s.Equal(15, len(env.Ordered()), "Should only load 8 valid lines.")
 	s.Equal("foo", env.Get("PUBLIC"), "LoadFile should ignore keys already set in env.")
 	s.Equal(expected, env.Ordered(), "LoadFile should maintain order.")
-	s.Equal([]string{"PUBLIC", "A", "B", "C", "D", "E", "F", "G"}, env.Order, "LoadFile should maintain ordered keys.")
+	s.Equal([]string{"PUBLIC", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N"}, env.Order, "LoadFile should maintain ordered keys.")
 }

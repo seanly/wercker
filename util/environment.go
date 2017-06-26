@@ -184,8 +184,30 @@ func (e *Environment) LoadFile(f string) error {
 		if e.Get(key) != "" {
 			continue
 		}
+
+		val = trim(val)
+
 		e.Add(key, val)
 	}
 
 	return nil
+}
+
+func trim(s string) string {
+	s = strings.TrimSpace(s)
+
+	if len(s) > 1 {
+		f := string(s[0:1])
+		l := string(s[len(s)-1:])
+		if f == l && strings.ContainsAny(f, `"'`) {
+			// strip surrounding quotes
+			s = string(s[1 : len(s)-1])
+
+			// now expand escaped double quotes and newlines
+			s = strings.Replace(s, `\"`, `"`, -1)
+			s = strings.Replace(s, `\n`, "\n", -1)
+		}
+	}
+
+	return s
 }
