@@ -184,7 +184,17 @@ func (s *WatchStep) killProcesses(containerID string, signal string) error {
 	if err != nil {
 		return err
 	}
-	cmd := []string{`/bin/sh`, `-c`, fmt.Sprintf(`ps | grep -v PID | awk "{if (\$1 != 1) print \$1}" | xargs -n 1 kill -s %s`, signal)}
+	details, err := client.InspectContainer(containerID)
+	if err != nil {
+		return err
+	}
+	var cmd []string
+	if len(details.Args) > 0 && details.Args[len(details.Args)-1] == `if [ -e /bin/bash ]; then /bin/bash; else /bin/sh; fi` {
+		cmd = []string{`/bin/sh`, `-c`, fmt.Sprintf(`ps -eaf | grep -v PID | awk "{if (\$2 != 1 && \$3 != 1) print \$2}" | xargs -n 1 kill -s %s`, signal)}
+	} else {
+		cmd = []string{`/bin/sh`, `-c`, fmt.Sprintf(`ps | grep -v PID | awk "{if (\$1 != 1) print \$1}" | xargs -n 1 kill -s %s`, signal)}
+	}
+
 	err = client.ExecOne(containerID, cmd, os.Stdout)
 	if err != nil {
 		return err
