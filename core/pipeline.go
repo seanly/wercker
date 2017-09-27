@@ -203,9 +203,9 @@ func (p *BasePipeline) SetupGuest(sessionCtx context.Context, sess *Session) err
 			fmt.Sprintf(`rm -rf "%s"`, filepath.Dir(p.options.BasePath())),
 			fmt.Sprintf(`mkdir -p "%s"`, filepath.Dir(p.options.BasePath())),
 			// Copy the source from the mounted directory to the base path
-			fmt.Sprintf(`cp -r "%s" "%s"`, p.options.MntPath("source"), p.options.BasePath()),
+			fmt.Sprintf(`cp -r -p "%s" "%s"`, p.options.MntPath("source"), p.options.BasePath()),
 			// Copy the cache from the mounted directory to the pipeline dir
-			fmt.Sprintf(`cp -r "%s" "%s"`, p.options.MntPath("cache"), p.options.GuestPath("cache")),
+			fmt.Sprintf(`cp -r -p "%s" "%s"`, p.options.MntPath("cache"), p.options.GuestPath("cache")),
 		)
 	}
 

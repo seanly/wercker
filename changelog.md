@@ -2,6 +2,7 @@
 - Update dependencies, as a result of `Sirupsen/logrus` -> `sirupsen/logrus` (#333)
 - Add a Docker subcommand (#335)
 - Ensure repository names are always lowercase (#338)
+- Preservce timestamps when copying source and cache into container (#340)
 
 ## v1.0.965 (2017-08-23)
 
