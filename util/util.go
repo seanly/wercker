@@ -190,6 +190,52 @@ func Untargzip(path string, r io.Reader) error {
 	return nil
 }
 
+// Untar takes a destination path and a reader; a tar reader loops over the tarfile
+// creating the file structure at 'dst' along the way, and writing any files
+func Untar(dst string, r io.Reader) error {
+	tr := tar.NewReader(r)
+
+	for {
+		header, err := tr.Next()
+
+		switch {
+		case err == io.EOF:
+			return nil
+		case err != nil:
+			return err
+		case header == nil:
+			continue
+		}
+
+		target := filepath.Join(dst, header.Name)
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0755); err != nil {
+					return err
+				}
+			}
+		case tar.TypeSymlink:
+			err = os.Symlink(header.Linkname, target)
+			if err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+
+			// copy over contents
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+		}
+	}
+}
+
 // TarPath makes a tarball out of a directory
 func TarPath(writer io.Writer, root string) error {
 	tw := tar.NewWriter(writer)
@@ -487,4 +533,30 @@ func ConvertUnit(size int64) (int64, string) {
 	}
 
 	return size, unit
+}
+
+// SqaushErrors takes multiple error objects and returns a single error which
+// will enumerate all Error() from the wrapped error objects. If errors
+// contains no error objects, then it will return nil.
+func SqaushErrors(errors []error) error {
+	if len(errors) > 0 {
+		return multiError(errors)
+	}
+
+	return nil
+}
+
+type multiError []error
+
+func (e multiError) Error() string {
+	if len(e) == 0 {
+		return ""
+	}
+
+	buf := make([]string, len(e))
+	for i, err := range []error(e) {
+		buf[i] = err.Error()
+	}
+
+	return strings.Join(buf, "; ")
 }

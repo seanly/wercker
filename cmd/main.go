@@ -345,6 +345,33 @@ var (
 		},
 		Flags: FlagsFor(WerckerDockerFlagSet),
 	}
+
+	stepCommand = cli.Command{
+		Name:      "step",
+		ShortName: "s",
+		Usage:     "manage steps",
+		Subcommands: []cli.Command{
+			{
+				Name:  "publish",
+				Usage: "publish a step",
+				Action: func(c *cli.Context) {
+					settings := util.NewCLISettings(c)
+					env := util.NewEnvironment(os.Environ()...)
+					opts, err := core.NewWerckerStepOptions(settings, env)
+					if err != nil {
+						cliLogger.Errorln("Invalid options\n", err)
+						os.Exit(1)
+					}
+					opts.StepDir = c.Args().Get(0)
+					err = cmdStepPublish(opts)
+					if err != nil {
+						cliLogger.Fatal(err)
+					}
+				},
+				Flags: StepPublishFlags,
+			},
+		},
+	}
 )
 
 func GetApp() *cli.App {
@@ -373,6 +400,7 @@ func GetApp() *cli.App {
 		versionCommand,
 		documentCommand(app),
 		dockerCommand,
+		stepCommand,
 	}
 	app.Before = func(ctx *cli.Context) error {
 		if ctx.GlobalBool("debug") {

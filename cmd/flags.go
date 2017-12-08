@@ -187,6 +187,11 @@ var (
 		cli.StringFlag{Name: "wercker-yml", Value: "", Usage: "Specify a specific yaml file.", EnvVar: "WERCKER_YML_FILE"},
 	}
 
+	// Steps options
+	StepPublishFlags = []cli.Flag{
+		cli.StringFlag{Name: "owner", Value: "", Usage: "owner of the step, leave blank to use the token owner"},
+	}
+
 	PullFlagSet = [][]cli.Flag{
 		[]cli.Flag{
 			cli.StringFlag{Name: "branch", Value: "", Usage: "Filter on this branch."},
