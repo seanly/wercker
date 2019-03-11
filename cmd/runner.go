@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/termie/go-shutil"
 	"github.com/wercker/wercker/core"
-	"github.com/wercker/wercker/docker"
+	dockerlocal "github.com/wercker/wercker/docker"
 	"github.com/wercker/wercker/event"
 	"github.com/wercker/wercker/rdd"
 	"github.com/wercker/wercker/util"
@@ -498,6 +498,32 @@ func (p *Runner) StartFullPipeline(options *core.PipelineOptions) *util.Finisher
 // box, and session. This is a bit of a long method, but it is pretty much
 // the entire "Setup Environment" step.
 func (p *Runner) SetupEnvironment(runnerCtx context.Context) (*RunnerShared, error) {
+	// Register our signal handler to clean the box up
+	// NOTE(termie): we're expecting that this is going to be the last handler
+	//               to be run since it calls exit, in the future we might be
+	//               able to do something like close the calling context and
+	//               short circuit / let the rest of things play out
+	var box core.Box
+	boxCleanupHandler := &util.SignalHandler{
+		ID: "box-cleanup",
+		F: func() bool {
+			p.logger.Errorln("Interrupt detected, cleaning up containers and shutting down")
+			if p.rdd != nil {
+				p.rdd.Deprovision()
+			}
+			if box != nil {
+				box.Stop()
+				if p.options.ShouldRemove {
+					box.Clean()
+				}
+			}
+			os.Exit(1)
+			return true
+		},
+	}
+	util.GlobalSigint().Add(boxCleanupHandler)
+	util.GlobalSigterm().Add(boxCleanupHandler)
+
 	shared := &RunnerShared{}
 	f := &util.Formatter{ShowColors: p.options.GlobalOptions.ShowColors}
 	timer := util.NewTimer()
@@ -517,7 +543,29 @@ func (p *Runner) SetupEnvironment(runnerCtx context.Context) (*RunnerShared, err
 			SafeID:  "setup environment",
 		}),
 	}
-	finisher := p.StartStep(shared, setupEnvironmentStep, 2)
+
+	var finisher *util.Finisher
+	stepInterruptedHandler := &util.SignalHandler{
+		ID: "setup-env-failed",
+		F: func() bool {
+			if finisher != nil {
+				p.logger.Errorln("Interrupt detected in setup environment: sending step failed event")
+				finisher.Finish(&StepResult{
+					Success:  false,
+					Artifact: nil,
+					Message:  "Step interrupted",
+					ExitCode: 1,
+				})
+			} else {
+				p.logger.Errorln("Interrupt detected in setup environment but finisher not set yet")
+			}
+			return true
+		},
+	}
+	util.GlobalSigint().Add(stepInterruptedHandler)
+	defer util.GlobalSigint().Remove(stepInterruptedHandler)
+
+	finisher = p.StartStep(shared, setupEnvironmentStep, 2)
 	defer finisher.Finish(sr)
 
 	if p.options.Verbose {
@@ -643,7 +691,7 @@ func (p *Runner) SetupEnvironment(runnerCtx context.Context) (*RunnerShared, err
 
 	// Fetch the box
 	timer.Reset()
-	box := pipeline.Box()
+	box = pipeline.Box()
 	_, err = box.Fetch(runnerCtx, pipeline.Env())
 	if err != nil {
 		sr.Message = err.Error()
@@ -721,29 +769,6 @@ func (p *Runner) SetupEnvironment(runnerCtx context.Context) (*RunnerShared, err
 	}
 	shared.containerID = container.ID
 
-	// Register our signal handler to clean the box up
-	// NOTE(termie): we're expecting that this is going to be the last handler
-	//               to be run since it calls exit, in the future we might be
-	//               able to do something like close the calling context and
-	//               short circuit / let the rest of things play out
-	boxCleanupHandler := &util.SignalHandler{
-		ID: "box-cleanup",
-		F: func() bool {
-			p.logger.Errorln("Interrupt detected, cleaning up containers and shutting down")
-			if p.rdd != nil {
-				p.rdd.Deprovision()
-			}
-			box.Stop()
-			if p.options.ShouldRemove {
-				box.Clean()
-			}
-			os.Exit(1)
-			return true
-		},
-	}
-	util.GlobalSigint().Add(boxCleanupHandler)
-	util.GlobalSigterm().Add(boxCleanupHandler)
-
 	p.logger.Debugln("Attaching session to base box")
 	// Start our session
 	sessionCtx, sess, err := p.GetSession(runnerCtx, container.ID)
@@ -788,7 +813,28 @@ type StepResult struct {
 
 // RunStep runs a step and tosses error if it fails
 func (p *Runner) RunStep(ctx context.Context, shared *RunnerShared, step core.Step, order int) (*StepResult, error) {
-	finisher := p.StartStep(shared, step, order)
+	var finisher *util.Finisher
+	stepInterruptedHandler := &util.SignalHandler{
+		ID: step.ID(),
+		F: func() bool {
+			if finisher != nil {
+				p.logger.Errorf("Interrupt detected in step %s so sending step finished event\n", step.DisplayName())
+				finisher.Finish(&StepResult{
+					Success:  false,
+					Artifact: nil,
+					Message:  "Step interrupted",
+					ExitCode: 1,
+				})
+			} else {
+				p.logger.Errorf("Interrupt detected in step %s but finisher not set yet\n", step.DisplayName())
+			}
+			return true
+		},
+	}
+	util.GlobalSigint().Add(stepInterruptedHandler)
+	defer util.GlobalSigint().Remove(stepInterruptedHandler)
+
+	finisher = p.StartStep(shared, step, order)
 	sr := &StepResult{
 		Success:  false,
 		Artifact: nil,

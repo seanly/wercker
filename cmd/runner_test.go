@@ -114,7 +114,7 @@ func (s *RunnerSuite) TestRunnerStepFailedOnInitEnvError() {
 	ctx := context.Background()
 	mockPipeline := &MockPipeline{}
 	shared := &RunnerShared{pipeline: mockPipeline}
-	step := &MockStep{}
+	step := &MockStep{BaseStep: core.NewBaseStep(core.BaseStepOptions{ID: "MockID", Name: "MockStep", DisplayName: "MockStep"})}
 	runner := &Runner{}
 	runner.emitter = core.NewNormalizedEmitter()
 

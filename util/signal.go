@@ -51,13 +51,18 @@ func (s *SignalMonkey) Add(fn *SignalHandler) {
 func (s *SignalMonkey) Remove(fn *SignalHandler) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	for i, x := range s.handlers {
+	// iterate over array, being careful that we may be removing elements as we do so
+	i := 0
+	for len(s.handlers) > i {
+		x := s.handlers[i]
 		if x.ID == fn.ID {
 			// Delete preserving order from here:
 			// https://code.google.com/p/go-wiki/wiki/SliceTricks
 			copy(s.handlers[i:], s.handlers[i+1:])
-			s.handlers[len(s.handlers)-1] = nil // or the zero value of T
+			s.handlers[len(s.handlers)-1] = nil
 			s.handlers = s.handlers[:len(s.handlers)-1]
+		} else {
+			i++
 		}
 	}
 }
