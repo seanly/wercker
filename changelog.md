@@ -1,5 +1,7 @@
 ## unreleased
 
+## 1.0.1530 (2019-03-11)
+
 - Turn on enable-dev-steps flag by default (#560)
 - Make wercker-init to be an embedded step (#558)
 - Fix bug which meant that when a run was aborted the step was sometimes still shown as running (#559)
