@@ -1,4 +1,4 @@
-//   Copyright © 2016,2018, Oracle and/or its affiliates.  All rights reserved.
+//   Copyright © 2016, 2019, Oracle and/or its affiliates.  All rights reserved.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/fsouza/go-dockerclient"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/mreiferson/go-snappystream"
 	"github.com/wercker/wercker/api"
 	"github.com/wercker/wercker/core"
-	"github.com/wercker/wercker/docker"
+	dockerlocal "github.com/wercker/wercker/docker"
 	"github.com/wercker/wercker/external"
 	"github.com/wercker/wercker/util"
 	"golang.org/x/net/context"
@@ -53,9 +53,8 @@ var (
 		Action: func(c *cli.Context) {
 			ctx := context.Background()
 			envfile := c.GlobalString("environment")
-			env := util.NewEnvironment(os.Environ()...)
-			env.LoadFile(envfile)
-			env.PassThruProxyConfig()
+
+			env := util.DefaultEnvironment(envfile)
 
 			settings := util.NewCLISettings(c)
 			opts, err := core.NewBuildOptions(settings, env)
@@ -83,9 +82,7 @@ var (
 			ctx := context.Background()
 			envfile := c.GlobalString("environment")
 			settings := util.NewCLISettings(c)
-			env := util.NewEnvironment(os.Environ()...)
-			env.LoadFile(envfile)
-			env.PassThruProxyConfig()
+			env := util.DefaultEnvironment(envfile)
 			opts, err := core.NewDevOptions(settings, env)
 			if err != nil {
 				cliLogger.Errorln("Invalid options\n", err)
@@ -112,9 +109,7 @@ var (
 			ctx := context.Background()
 			envfile := c.GlobalString("environment")
 			settings := util.NewCLISettings(c)
-			env := util.NewEnvironment(os.Environ()...)
-			env.LoadFile(envfile)
-			env.PassThruProxyConfig()
+			env := util.DefaultEnvironment(envfile)
 			opts, err := core.NewCheckConfigOptions(settings, env)
 			if err != nil {
 				cliLogger.Errorln("Invalid options\n", err)
@@ -141,9 +136,7 @@ var (
 			ctx := context.Background()
 			envfile := c.GlobalString("environment")
 			settings := util.NewCLISettings(c)
-			env := util.NewEnvironment(os.Environ()...)
-			env.LoadFile(envfile)
-			env.PassThruProxyConfig()
+			env := util.DefaultEnvironment(envfile)
 			opts, err := core.NewDeployOptions(settings, env)
 			if err != nil {
 				cliLogger.Errorln("Invalid options\n", err)
@@ -443,12 +436,11 @@ var (
 		Name:      "workflow",
 		ShortName: "w",
 		Usage:     "run workflows locally (experimental)",
+		ArgsUsage: "<workflow-name>",
 		Action: func(c *cli.Context) {
 			ctx := context.Background()
 			envfile := c.GlobalString("environment")
-			env := util.NewEnvironment(os.Environ()...)
-			env.LoadFile(envfile)
-			env.PassThruProxyConfig()
+			env := util.DefaultEnvironment(envfile)
 
 			// We do not want `target` to be set by NewCLISettings()
 			// because it will conflict with the workflow name.
@@ -463,7 +455,8 @@ var (
 
 			opts.WorkflowName = c.Args().Get(0)
 			if opts.WorkflowName == "" {
-				cliLogger.Errorln("Missing workflow name to run")
+				cliLogger.Errorln("Missing workflow name to run\n")
+				cli.ShowCommandHelp(c, "workflow")
 				os.Exit(1)
 			}
 

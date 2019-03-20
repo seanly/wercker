@@ -1,4 +1,4 @@
-//   Copyright © 2016, 2018, Oracle and/or its affiliates.  All rights reserved.
+//   Copyright © 2016, 2019, Oracle and/or its affiliates.  All rights reserved.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -1161,13 +1161,13 @@ func NewExternalRunnerOptions(c util.Settings, e *util.Environment) (*WerckerRun
 }
 
 // WorkflowOptions currently uses PipelineOptions
-// along with its contructor for simplicity.
+// along with its constructor for simplicity.
 type WorkflowOptions struct {
 	PipelineOptions PipelineOptions
 	WorkflowName    string
 }
 
-// NewWorkflowOptions is a contructor for WorkflowOptions.
+// NewWorkflowOptions is a constructor for WorkflowOptions.
 func NewWorkflowOptions(c util.Settings, e *util.Environment) (*WorkflowOptions, error) {
 	pipelineOpts, err := NewPipelineOptions(c, e)
 	if err != nil {

@@ -1,4 +1,4 @@
-//   Copyright 2016 Wercker Holding BV
+//   Copyright © 2016, 2019, Oracle and/or its affiliates.  All rights reserved.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
-	"github.com/wercker/wercker/auth"
+	dockerauth "github.com/wercker/wercker/auth"
 	"github.com/wercker/wercker/util"
 )
 
@@ -254,6 +254,7 @@ type WorkflowPipelineConfig struct {
 	PipelineName     string   `yaml:"pipelineName"`
 	Requires         []string `yaml:"requires"`
 	ArtifactPipeline string   `yaml:"artifactPipeline"`
+	EnvFile          string   `yaml:"envFile"`
 }
 
 // GetYAMLPipelineName returns name of the pipeline to run.

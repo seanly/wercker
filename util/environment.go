@@ -1,4 +1,4 @@
-//   Copyright 2016 Wercker Holding BV
+//   Copyright © 2016, 2019, Oracle and/or its affiliates.  All rights reserved.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	protected = "XXX_"
-	public    = "X_"
+	protectedPrefix = "XXX_"
+	publicPrefix    = "X_"
 )
 
 // Environment represents a shell environment and is implemented as something
@@ -32,6 +32,19 @@ type Environment struct {
 	Hidden *Environment
 	Map    map[string]string
 	Order  []string
+}
+
+// DefaultEnvironment uses the default strategy of using the current host's
+// environment, loading the environment variables defined in the file located at
+// envfile (if it doesn't exist, it will be silently ignored). Finally any proxy
+// environment variables that are defined on the host, will be passed through to
+// the build (by prefixing these with the publicPrefix).
+func DefaultEnvironment(envfile string) *Environment {
+	env := NewEnvironment(os.Environ()...)
+	env.LoadFile(envfile)
+	env.PassThruProxyConfig()
+
+	return env
 }
 
 // NewEnvironment fills up an Environment from a []string
@@ -66,7 +79,7 @@ func (e *Environment) Add(key, value string) {
 	e.Map[key] = value
 }
 
-// Add an individual record.
+// AddIfMissing an individual record.
 func (e *Environment) AddIfMissing(key, value string) {
 	if e.Map == nil {
 		e.Add(key, value)
@@ -75,7 +88,8 @@ func (e *Environment) AddIfMissing(key, value string) {
 	}
 }
 
-// Add proxy configuration as public
+// PassThruProxyConfig prefixes any proxy environment variables defined on the
+// host with publicPrefix. So they will be available during a build.
 func (e *Environment) PassThruProxyConfig() {
 	if e.Map == nil {
 		return
@@ -84,7 +98,7 @@ func (e *Environment) PassThruProxyConfig() {
 	for _, key := range proxyEnv {
 		value, ok := e.Map[key]
 		if ok {
-		    e.AddIfMissing(fmt.Sprintf("%s%s", public, key), value)
+			e.AddIfMissing(fmt.Sprintf("%s%s", publicPrefix, key), value)
 		}
 	}
 }
@@ -141,14 +155,16 @@ var proxyEnv = [...]string{
 	"NO_PROXY",
 }
 
-// Collect passthru variables from the project
+// GetPassthru gets the environment variables from e which should be exposed to
+// the build as normal environment variables.
 func (e *Environment) GetPassthru() (env *Environment) {
-	return e.passthru(public)
+	return e.passthru(publicPrefix)
 }
 
-// Collect the hidden passthru variables
+// GetHiddenPassthru gets the environment variables from e which should be
+// exposed to the build as hidden environment variables.
 func (e *Environment) GetHiddenPassthru() (env *Environment) {
-	return e.passthru(protected)
+	return e.passthru(protectedPrefix)
 }
 
 func (e *Environment) passthru(prefix string) (env *Environment) {
@@ -164,6 +180,7 @@ func (e *Environment) passthru(prefix string) (env *Environment) {
 
 }
 
+// GetMirror retrieves all the environment variables.
 func (e *Environment) GetMirror() [][]string {
 	a := [][]string{}
 	for _, key := range mirroredEnv {
