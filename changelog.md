@@ -1,5 +1,9 @@
 ## unreleased
 
+## 1.0.1539 (2019-03-20)
+
+- Add ability to reference environment files from workflows (#562)
+
 ## 1.0.1530 (2019-03-11)
 
 - Turn on enable-dev-steps flag by default (#560)
