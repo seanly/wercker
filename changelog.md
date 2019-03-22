@@ -1,5 +1,7 @@
 ## unreleased
 
+- Fix bug in local steps (#564)
+
 ## 1.0.1539 (2019-03-20)
 
 - Add ability to reference environment files from workflows (#562)

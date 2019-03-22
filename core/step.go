@@ -391,6 +391,7 @@ func (s *ExternalStep) Fetch() (string, error) {
 				if err != nil {
 					return "", err
 				}
+				os.MkdirAll(s.options.StepPath(), 0755)
 				err = os.Symlink(localPath, stepPath)
 				if err != nil {
 					return "", err
