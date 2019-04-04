@@ -1,5 +1,9 @@
 ## unreleased
 
+## 1.0.1554 (2019-04-04)
+
+-  Allow wercker CLI to be run locally with a web proxy set (#566) 
+
 ## 1.0.1546 (2019-03-27)
 
 - Fix bug in local steps (#564)
