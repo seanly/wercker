@@ -68,7 +68,7 @@ func (e *Environment) Update(a [][]string) {
 	}
 }
 
-// Add an individual record.
+// Add updates an individual record if already exists and adds a new record if it does not.
 func (e *Environment) Add(key, value string) {
 	if e.Map == nil {
 		e.Map = make(map[string]string)
@@ -146,13 +146,46 @@ var mirroredEnv = [...]string{
 	"WERCKER_MAIN_PIPELINE_STARTED",
 }
 
+var httpProxyLowerCase = "http_proxy"
+var httpsProxyLowerCase = "https_proxy"
+var noProxyLowerCase = "no_proxy"
+var httpProxyUpperCase = "HTTP_PROXY"
+var httpsProxyUpperCase = "HTTPS_PROXY"
+var noProxyUpperCase = "NO_PROXY"
+
 var proxyEnv = [...]string{
-	"http_proxy",
-	"https_proxy",
-	"no_proxy",
-	"HTTP_PROXY",
-	"HTTPS_PROXY",
-	"NO_PROXY",
+	httpProxyLowerCase,
+	httpsProxyLowerCase,
+	noProxyLowerCase,
+	httpProxyUpperCase,
+	httpsProxyUpperCase,
+	noProxyUpperCase,
+}
+
+// AddNoProxy finds out whether the environment has been configured
+// to use a web proxy by checking whether any of
+// http_proxy, https_proxy, HTTP_PROXY or HTTPS_PROXY are set.
+// If any of these are set then no_proxy and/or NO_PROXY
+// are set in the environment to exclude the specified hostname from from the proxy.
+func (e *Environment) AddNoProxy(hostname string) {
+	// first look at http_proxy and https_proxy and set no_proxy if needed
+	if e.Get(httpProxyLowerCase) != "" || e.Get(httpsProxyLowerCase) != "" {
+		noProxyLowerCaseValue := e.Get(noProxyLowerCase)
+		if noProxyLowerCaseValue == "" {
+			e.Add(noProxyLowerCase, hostname)
+		} else {
+			e.Add(noProxyLowerCase, hostname+","+noProxyLowerCaseValue)
+		}
+	}
+	// now look at HTTP_PROXY and HTTPS_PROXY and set NO_PROXY if needed
+	if e.Get(httpProxyUpperCase) != "" || e.Get(httpsProxyUpperCase) != "" {
+		noProxyUpperCaseValue := e.Get(noProxyUpperCase)
+		if noProxyUpperCaseValue == "" {
+			e.Add(noProxyUpperCase, hostname)
+		} else {
+			e.Add(noProxyUpperCase, hostname+","+noProxyUpperCaseValue)
+		}
+	}
 }
 
 // GetPassthru gets the environment variables from e which should be exposed to

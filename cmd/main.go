@@ -1251,6 +1251,14 @@ func executePipeline(cmdCtx context.Context, options *core.PipelineOptions, dock
 		}
 	}
 
+	// All the main steps have now been run. If we have some after-steps to run,
+	// then before we shut down the container we need to save the current state of
+	// the environment variables (which may have been changed by the pipeline)
+	// so we can pass them to the container used for the after-steps.
+	if pr.Success && len(pipeline.AfterSteps()) > 0 {
+		pipeline.SyncEnvironment(cmdCtx, shared.sess)
+	}
+
 	if options.ShouldCommit {
 		_, err = box.Commit(repoName, tag, message, true)
 		if err != nil {

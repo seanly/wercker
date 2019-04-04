@@ -80,14 +80,20 @@ func (t *FakeTransport) Cancel() {
 }
 
 func (t *FakeTransport) ListenAndRespond(exit int, recv []string) {
+	numberOfSentinelsReceived := 0
 	for {
 		s := <-t.inchan
-		// If this is the last string send our stuff and echo the status code
-		if strings.HasPrefix(s, "echo") && strings.HasSuffix(s, "$?\n") {
+		// If we've received both sentinels
+		// send our stuff followed by the two sentinels (with status codes)
+		if strings.HasPrefix(s, "echo") && strings.Contains(s, "$?") {
+			numberOfSentinelsReceived++
+		}
+		if numberOfSentinelsReceived == 2 {
 			parts := strings.Split(s, " ")
 			for _, x := range recv {
 				t.outchan <- x
 			}
+			t.outchan <- fmt.Sprintf("%s %d", parts[1], exit)
 			t.outchan <- fmt.Sprintf("%s %d", parts[1], exit)
 			return
 		}
@@ -169,6 +175,7 @@ func (s *SessionSuite) TestSendChecked() {
 	s.Nil(err)
 	s.Equal(0, exit)
 	s.Equal("foo\n", recv[0])
+	s.Equal(1, len(recv))
 
 	stepper.Step()
 	// Non-zero Exit
@@ -176,6 +183,7 @@ func (s *SessionSuite) TestSendChecked() {
 	s.NotNil(err)
 	s.Equal(1, exit)
 	s.Equal("bar\n", recv[0])
+	s.Equal(1, len(recv))
 }
 
 func (s *SessionSuite) TestSendCheckedCommandTimeout() {
@@ -229,7 +237,8 @@ func (s *SessionSuite) TestSendCheckedEarlyExit() {
 	go func() {
 		stepper.Step() // "foo"
 		// Wait 5 milliseconds because Send has short delay
-		stepper.Step(5) // "echo test-sentinel $?"
+		stepper.Step(5) // first sentinel
+		stepper.Step(5) // second sentinel
 		transport.outchan <- "foo"
 		transport.Cancel()
 		transport.outchan <- "bar"
