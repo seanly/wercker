@@ -19,10 +19,10 @@ import (
 	"io"
 	"strings"
 
-	docker "github.com/fsouza/go-dockerclient"
+	"github.com/fsouza/go-dockerclient"
 	"github.com/google/shlex"
 	"github.com/pborman/uuid"
-	dockerauth "github.com/wercker/wercker/auth"
+	"github.com/wercker/wercker/auth"
 	"github.com/wercker/wercker/core"
 	"github.com/wercker/wercker/util"
 	"golang.org/x/net/context"
@@ -279,104 +279,7 @@ func (s *DockerRunStep) Execute(ctx context.Context, sess *core.Session) (int, e
 	}
 	s.logger.Infoln("Container is successfully started name : ", s.ContainerName)
 
-	// exclude this container from any web proxy being used
-	err = addNoProxy(ctx, sess, s.OriginalContainerName)
-	if err != nil {
-		return 0, err
-	}
-
 	return 0, nil
-}
-
-// addNoProxy finds out whether the pipeline container has been configured
-// to use a web proxy by checking whether any of the environment variables
-// http_proxy, https_proxy, HTTP_PROXY or HTTPS_PROXY are set.
-// If any of these are set then the environment variables no_proxy and/or NO_PROXY
-// are set in the pipeline container to exclude the specified hostname from the proxy.
-func addNoProxy(ctx context.Context, sess *core.Session, name string) error {
-	// build an Environment containing the variables we need to set
-	e := util.NewEnvironment()
-
-	// first look at http_proxy and https_proxy and set no_proxy if needed
-	var httpProxyLowerCase = "http_proxy"
-	var httpsProxyLowerCase = "https_proxy"
-	var noProxyLowerCase = "no_proxy"
-
-	httpProxyLowerCaseValue, err := getEnvVar(ctx, sess, httpProxyLowerCase)
-	if err != nil {
-		return err
-	}
-	httpsProxyLowerCaseValue, err := getEnvVar(ctx, sess, httpsProxyLowerCase)
-	if err != nil {
-		return err
-	}
-	if httpProxyLowerCaseValue != "" || httpsProxyLowerCaseValue != "" {
-		noProxyLowerCaseValue, err := getEnvVar(ctx, sess, noProxyLowerCase)
-		if err != nil {
-			return err
-		}
-		if noProxyLowerCaseValue == "" {
-			e.Add(noProxyLowerCase, name)
-		} else {
-			e.Add(noProxyLowerCase, name+","+noProxyLowerCaseValue)
-		}
-	}
-
-	// now look at HTTP_PROXY and HTTPS_PROXY and set NO_PROXY if needed
-	var httpProxyUpperCase = "HTTP_PROXY"
-	var httpsProxyUpperCase = "HTTPS_PROXY"
-	var noProxyUpperCase = "NO_PROXY"
-
-	httpProxyUpperCaseValue, err := getEnvVar(ctx, sess, httpProxyUpperCase)
-	if err != nil {
-		return err
-	}
-	httpsProxyUpperCaseValue, err := getEnvVar(ctx, sess, httpsProxyUpperCase)
-	if err != nil {
-		return err
-	}
-	if httpProxyUpperCaseValue != "" || httpsProxyUpperCaseValue != "" {
-		noProxyUpperCaseValue, err := getEnvVar(ctx, sess, noProxyUpperCase)
-		if err != nil {
-			return err
-		}
-		if noProxyUpperCaseValue == "" {
-			e.Add(noProxyUpperCase, name)
-		} else {
-			e.Add(noProxyUpperCase, name+","+noProxyUpperCaseValue)
-		}
-	}
-
-	if len(e.Order) > 0 {
-		// set the environment variables in the pipeline container
-		_, _, err = sess.SendChecked(ctx, e.Export()...)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// getEnvVar returns the value of the specified environment variable from the pipeline container.
-// If the environment variable is unset then an empty string is returned.
-// If its value contains multiple lines then only the first line is returned.
-func getEnvVar(ctx context.Context, sess *core.Session, varName string) (value string, err error) {
-	sess.HideLogs()
-	defer sess.ShowLogs()
-
-	exit, output, err := sess.SendChecked(ctx, "echo $"+varName)
-	if err != nil {
-		return "", err
-	}
-	if exit != 0 {
-		return "", fmt.Errorf("Unable to get value of environment variable %s, exit code: %d", value, exit)
-	}
-	if output == nil || len(output) == 0 {
-		return "", fmt.Errorf("No output returned by echo command from container")
-	}
-
-	return strings.TrimSuffix(output[0], "\n"), nil
 }
 
 func (s *DockerRunStep) createContainer(client *DockerClient, conf *docker.Config, hostconfig *docker.HostConfig, networkingConfig *docker.NetworkingConfig) (*docker.Container, error) {

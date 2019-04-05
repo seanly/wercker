@@ -134,7 +134,6 @@ runTests1() {
   source $testsDir/docker-push-image/test.sh || return 1
   source $testsDir/docker-networks/test.sh || return 1
   source $testsDir/docker-kill/test.sh || return 1
-  source $testsDir/noproxy/test.sh || return 1
 
   export X_TEST_SERVICE_VOL_PATH=$testsDir/test-service-vol
   basicTest "docker run" build "$testsDir/docker-run" --docker-local || return 1

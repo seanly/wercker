@@ -230,12 +230,12 @@ func smartSplitLines(line, sentinel string) []string {
 // SendChecked sends commands, waits for them to complete and returns the
 // exit status and output
 // Ways to know a command is done:
-//  [x] We received two sentinel echos - one from standard output and one from standard error
+//  [x] We received the sentinel echo
 //  [x] The container has exited and we've exhausted the incoming data
 //  [x] The session has closed and we've exhaused the incoming data
 //  [x] The command has timed out
 // Ways for a command to be successful:
-//  [x] We received two sentinel echos and the second one had exit code 0
+//  [x] We received the sentinel echo with exit code 0
 func (s *Session) SendChecked(sessionCtx context.Context, commands ...string) (int, []string, error) {
 	e, err := EmitterFromContext(sessionCtx)
 	if err != nil {
@@ -293,9 +293,8 @@ func (s *Session) SendChecked(sessionCtx context.Context, commands ...string) (i
 		}
 	}()
 
-	// Read in data until we have received both sentinels or are asked to stop
+	// Read in data until we get our sentinel or are asked to stop
 	go func() {
-		sentinelCount := 0
 		for {
 			select {
 			case line := <-s.recv:
@@ -303,25 +302,22 @@ func (s *Session) SendChecked(sessionCtx context.Context, commands ...string) (i
 				noResponseTimeout <- struct{}{}
 				lines := smartSplitLines(line, sentinel)
 				for _, subline := range lines {
-					sentinelRead, exit := checkLine(subline, sentinel)
-					if sentinelRead {
-						sentinelCount++
-						if sentinelCount == 2 {
-							// both sentinels have been received, so we're done]
-							e.Emit(Logs, &LogsArgs{
-								Hidden: true,
-								Logs:   subline,
-							})
-							exitChan <- exit
-							return
-						}
-					} else {
+					// subline = fmt.Sprintf("%s\n", subline)
+					// If we found the exit code, we're done
+					foundExit, exit := checkLine(subline, sentinel)
+					if foundExit {
 						e.Emit(Logs, &LogsArgs{
-							Hidden: s.logsHidden,
+							Hidden: true,
 							Logs:   subline,
 						})
-						recv = append(recv, subline)
+						exitChan <- exit
+						return
 					}
+					e.Emit(Logs, &LogsArgs{
+						Hidden: s.logsHidden,
+						Logs:   subline,
+					})
+					recv = append(recv, subline)
 				}
 			case <-stopReading:
 				return
@@ -333,13 +329,7 @@ func (s *Session) SendChecked(sessionCtx context.Context, commands ...string) (i
 	if err != nil {
 		return -1, []string{}, err
 	}
-	// send a sentinel which will be echoed back to standard output
 	err = s.Send(sessionCtx, true, fmt.Sprintf("echo %s $?", sentinel))
-	if err != nil {
-		return -1, []string{}, err
-	}
-	// send a sentinel which will be echoed back to standard error
-	err = s.Send(sessionCtx, true, fmt.Sprintf("echo %s $? 1>&2", sentinel))
 	if err != nil {
 		return -1, []string{}, err
 	}

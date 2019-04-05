@@ -73,11 +73,6 @@ func (d *DockerDeploy) InitEnv(ctx context.Context, hostEnv *util.Environment) {
 	env.Update(hostEnv.GetMirror())
 	env.Update(hostEnv.GetPassthru().Ordered())
 	env.Hidden.Update(hostEnv.GetHiddenPassthru().Ordered())
-
-	// exclude services from any web proxy being used
-	for _, service := range d.Services() {
-		env.AddNoProxy(service.GetServiceAlias())
-	}
 }
 
 // DockerRepo returns the name where we might store this in docker
